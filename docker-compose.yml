@@ -1,0 +1,16 @@
+version: '3.8'
+services:
+  dev:
+    container_name: cross-stitch-dev
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "5173:5173"
+    volumes:
+      # Mount the src directory for hot-reloading
+      - ./src:/app/src
+    # Keep stdin open to allow attaching to the container
+    stdin_open: true
+    # Enable TTY for an interactive shell
+    tty: true 
