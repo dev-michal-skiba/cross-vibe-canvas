@@ -1,0 +1,11 @@
+.grid {
+  display: grid;
+  /* border: 1px solid #ccc; */
+  background-color: #fdfdfd;
+  width: inherit;
+  height: inherit;
+}
+
+.grid-cell {
+  border: 1px solid #eee;
+}
