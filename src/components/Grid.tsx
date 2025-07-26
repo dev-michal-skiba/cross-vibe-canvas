@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useState, useMemo } from 'react';
+import React, { useRef, useEffect, useState, useMemo, useCallback } from 'react';
 import type { Line, Point } from '../types';
 import './Grid.css';
 
@@ -185,6 +185,13 @@ const Grid: React.FC<GridProps> = ({
     lines, coloredCells, isBgImageLoaded
   ]);
 
+  const getSnappedPos = useCallback((pos: Point): Point => {
+    const snapSize = size / 2;
+    const x = Math.round(pos.x / snapSize) * snapSize;
+    const y = Math.round(pos.y / snapSize) * snapSize;
+    return { x, y };
+  }, [size]);
+
   const findClickedLine = (clickPos: Point): number | null => {
     const CLICK_THRESHOLD = 5 / zoom;
     let closestLineIndex: number | null = null;
@@ -209,7 +216,7 @@ const Grid: React.FC<GridProps> = ({
     };
   };
 
-  const handleMouseDown = (evt: React.MouseEvent) => {
+  const handleMouseDown = useCallback((evt: React.MouseEvent) => {
     const pos = getMousePos(evt);
     if (!pos) return;
 
@@ -221,27 +228,21 @@ const Grid: React.FC<GridProps> = ({
         return;
       }
       setIsDrawing(true);
-      const snappedPos = {
-        x: Math.round(pos.x / size) * size,
-        y: Math.round(pos.y / size) * size,
-      };
+      const snappedPos = getSnappedPos(pos);
       setStartPoint(snappedPos);
       setEndPoint(snappedPos);
     }
-  };
+  }, [selectedColor, getSnappedPos]);
 
-  const handleMouseMove = (evt: React.MouseEvent) => {
+  const handleMouseMove = useCallback((evt: React.MouseEvent) => {
     if (!isDrawing) return;
     const pos = getMousePos(evt);
     if (!pos) return;
-    const snappedPos = {
-      x: Math.round(pos.x / size) * size,
-      y: Math.round(pos.y / size) * size,
-    };
+    const snappedPos = getSnappedPos(pos);
     setEndPoint(snappedPos);
-  };
+  }, [isDrawing, getSnappedPos]);
 
-  const handleMouseUp = (evt: React.MouseEvent) => {
+  const handleMouseUp = useCallback((evt: React.MouseEvent) => {
     const pos = getMousePos(evt);
     if (!pos || !mouseDownPos) return;
 
@@ -266,7 +267,7 @@ const Grid: React.FC<GridProps> = ({
     setStartPoint(null);
     setEndPoint(null);
     setMouseDownPos(null);
-  };
+  }, [isDrawing, selectedColor, startPoint, endPoint, mouseDownPos, lines, setLines, setColoredCells, size]);
 
   const handleContextMenu = (evt: React.MouseEvent) => {
     evt.preventDefault();
