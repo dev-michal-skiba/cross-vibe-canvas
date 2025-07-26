@@ -26,6 +26,20 @@ function App() {
   const [stitchOpacity, setStitchOpacity] = useState(1);
   const [crossLinesOpacity, setCrossLinesOpacity] = useState(1);
 
+  const handleStartNewProject = () => {
+    setGridSize(null);
+    setLines([]);
+    setColoredCells(new Map());
+    setPalette([]);
+    setSelectedColor(null);
+    setBackgroundImage(null);
+    setZoom(1.0);
+    setImageOpacity(1);
+    setGridOpacity(1);
+    setStitchOpacity(1);
+    setCrossLinesOpacity(1);
+  };
+
   const handleAddColorToPalette = (newColor: string) => {
     if (newColor && !palette.includes(newColor)) {
       setPalette([...palette, newColor]);
@@ -155,7 +169,7 @@ function App() {
         </div>
         {gridSize && (
           <div className="header-right">
-            <button onClick={() => setGridSize(null)} className="header-button">Start New Project</button>
+            <button onClick={handleStartNewProject} className="header-button">Start New Project</button>
             <button onClick={() => setShowControlsInfo(true)} className="header-button">Controls</button>
           </div>
         )}
@@ -243,33 +257,37 @@ function App() {
 
           </div>
         ) : (
-          <div className="main-content">
-            <div className="controls">
-              <form onSubmit={handleCreateGrid} className="controls">
-                <label>
-                  Rows:
-                  <input
-                    type="number"
-                    value={rowsInput}
-                    onChange={(e) => setRowsInput(parseInt(e.target.value, 10))}
-                    min="1"
-                  />
-                </label>
-                <label>
-                  Columns:
-                  <input
-                    type="number"
-                    value={colsInput}
-                    onChange={(e) => setColsInput(parseInt(e.target.value, 10))}
-                    min="1"
-                  />
-                </label>
-                <button type="submit">Create Grid</button>
-                <label className="import-button">
-                  Import Project
-                  <input type="file" onChange={handleImport} accept=".zip" />
-                </label>
-              </form>
+          <div className="start-view-container">
+            <form onSubmit={handleCreateGrid} className="create-grid-form">
+              <span>Create grid:</span>
+              <label>
+                Rows:
+                <input
+                  type="number"
+                  value={rowsInput}
+                  onChange={(e) => setRowsInput(parseInt(e.target.value, 10))}
+                  min="1"
+                  className="grid-size-input"
+                />
+              </label>
+              <label>
+                Columns:
+                <input
+                  type="number"
+                  value={colsInput}
+                  onChange={(e) => setColsInput(parseInt(e.target.value, 10))}
+                  min="1"
+                  className="grid-size-input"
+                />
+              </label>
+              <button type="submit">Create Grid</button>
+            </form>
+            <span className="or-divider">or</span>
+            <div>
+              <button onClick={() => document.getElementById('project-import-input')?.click()}>
+                Import Project
+              </button>
+              <input id="project-import-input" type="file" onChange={handleImport} accept=".zip" style={{ display: 'none' }} />
             </div>
           </div>
         )}
