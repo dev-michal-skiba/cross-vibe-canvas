@@ -1,20 +1,17 @@
 import React, { useRef, useEffect, useState } from 'react';
+import type { Line, Point } from '../types';
 import './Grid.css';
-
-interface Point {
-  x: number;
-  y: number;
-}
 
 interface GridProps {
   rows: number;
   cols: number;
   size: number;
   zoom: number;
-  lines: [Point, Point][];
-  setLines: React.Dispatch<React.SetStateAction<[Point, Point][]>>;
-  coloredCells: Set<string>;
-  setColoredCells: React.Dispatch<React.SetStateAction<Set<string>>>;
+  lines: Line[];
+  setLines: React.Dispatch<React.SetStateAction<Line[]>>;
+  coloredCells: Map<string, string>;
+  setColoredCells: React.Dispatch<React.SetStateAction<Map<string, string>>>;
+  selectedColor: string | null;
 }
 
 function pointToLineSegmentDistance(p: Point, p1: Point, p2: Point): number {
@@ -41,6 +38,7 @@ const Grid: React.FC<GridProps> = ({
   setLines,
   coloredCells,
   setColoredCells,
+  selectedColor,
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isDrawing, setIsDrawing] = useState(false);
@@ -58,8 +56,8 @@ const Grid: React.FC<GridProps> = ({
     canvas.width = cols * size;
     canvas.height = rows * size;
 
-    ctx.fillStyle = 'gray';
-    coloredCells.forEach(cell => {
+    coloredCells.forEach((color, cell) => {
+      ctx.fillStyle = color;
       const [row, col] = cell.split('-').map(Number);
       ctx.fillRect(col * size, row * size, size, size);
     });
@@ -79,8 +77,8 @@ const Grid: React.FC<GridProps> = ({
       ctx.stroke();
     }
 
-    ctx.strokeStyle = 'black';
-    lines.forEach(([start, end]) => {
+    lines.forEach(({ start, end, color }) => {
+      ctx.strokeStyle = color;
       ctx.beginPath();
       ctx.moveTo(start.x, start.y);
       ctx.lineTo(end.x, end.y);
@@ -88,19 +86,20 @@ const Grid: React.FC<GridProps> = ({
     });
 
     if (isDrawing && startPoint && endPoint) {
+      ctx.strokeStyle = selectedColor || 'black';
       ctx.beginPath();
       ctx.moveTo(startPoint.x, startPoint.y);
       ctx.lineTo(endPoint.x, endPoint.y);
       ctx.stroke();
     }
-  }, [rows, cols, size, lines, isDrawing, startPoint, endPoint, coloredCells]);
+  }, [rows, cols, size, lines, isDrawing, startPoint, endPoint, coloredCells, selectedColor]);
 
   const findClickedLine = (clickPos: Point): number | null => {
     const CLICK_THRESHOLD = 5 / zoom;
     let closestLineIndex: number | null = null;
     let minDistance = Infinity;
     lines.forEach((line, index) => {
-      const distance = pointToLineSegmentDistance(clickPos, line[0], line[1]);
+      const distance = pointToLineSegmentDistance(clickPos, line.start, line.end);
       if (distance < CLICK_THRESHOLD && distance < minDistance) {
         minDistance = distance;
         closestLineIndex = index;
@@ -126,6 +125,10 @@ const Grid: React.FC<GridProps> = ({
     setMouseDownPos(pos);
 
     if (evt.ctrlKey && evt.button === 0) {
+      if (!selectedColor) {
+        alert("Please select a color from the palette before drawing.");
+        return;
+      }
       setIsDrawing(true);
       const snappedPos = {
         x: Math.round(pos.x / size) * size,
@@ -151,16 +154,20 @@ const Grid: React.FC<GridProps> = ({
     const pos = getMousePos(evt);
     if (!pos || !mouseDownPos) return;
 
-    if (isDrawing) {
+    if (isDrawing && selectedColor) {
       if (startPoint && endPoint && (startPoint.x !== endPoint.x || startPoint.y !== endPoint.y)) {
-        setLines([...lines, [startPoint, endPoint]]);
+        setLines([...lines, { start: startPoint, end: endPoint, color: selectedColor }]);
       }
     } else {
       const dist = Math.sqrt(Math.pow(pos.x - mouseDownPos.x, 2) + Math.pow(pos.y - mouseDownPos.y, 2));
       if (!evt.ctrlKey && evt.button === 0 && dist < 5) {
+        if (!selectedColor) {
+          alert("Please select a color from the palette before filling cells.");
+          return;
+        }
         const col = Math.floor(pos.x / size);
         const row = Math.floor(pos.y / size);
-        setColoredCells(prev => new Set(prev).add(`${row}-${col}`));
+        setColoredCells(prev => new Map(prev).set(`${row}-${col}`, selectedColor));
       }
     }
 
@@ -184,7 +191,7 @@ const Grid: React.FC<GridProps> = ({
       const col = Math.floor(pos.x / size);
       const row = Math.floor(pos.y / size);
       setColoredCells(prev => {
-        const newCells = new Set(prev);
+        const newCells = new Map(prev);
         newCells.delete(`${row}-${col}`);
         return newCells;
       });

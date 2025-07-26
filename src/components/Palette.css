@@ -1,0 +1,87 @@
+.palette-container {
+  padding: 20px;
+  background-color: #f9f9f9;
+  border-left: 1px solid #ddd;
+  display: flex;
+  flex-direction: column;
+}
+
+.palette {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(40px, 1fr));
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.color-swatch {
+  width: 40px;
+  height: 40px;
+  border-radius: 4px;
+  cursor: pointer;
+  border: 2px solid transparent;
+  position: relative;
+}
+
+.color-swatch.selected {
+  border-color: #007bff;
+  box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
+}
+
+.remove-color {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  background: white;
+  border: 1px solid #ccc;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.color-swatch:hover .remove-color {
+  opacity: 1;
+}
+
+.color-input-container {
+  display: flex;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.add-color-button {
+  width: 40px;
+  height: 40px;
+  font-size: 24px;
+  border: 2px dashed #ccc;
+  border-radius: 4px;
+  background-color: transparent;
+  cursor: pointer;
+}
+
+.add-color-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.add-color-controls input[type="color"] {
+  width: 40px;
+  height: 40px;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+
+.confirm-add, .cancel-add {
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background: white;
+  cursor: pointer;
+  padding: 5px 10px;
+} 

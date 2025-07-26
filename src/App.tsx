@@ -2,22 +2,21 @@
 import { useState } from 'react';
 import JSZip from 'jszip';
 import Canvas from './components/Canvas';
-import ControlsInfo from './components/ControlsInfo'
-import './App.css'
-
-interface Point {
-  x: number;
-  y: number;
-}
+import ControlsInfo from './components/ControlsInfo';
+import Palette from './components/Palette';
+import './App.css';
+import type { Line } from './types';
 
 function App() {
-  const [gridSize, setGridSize] = useState<{ rows: number; cols: number } | null>(null)
-  const [rowsInput, setRowsInput] = useState(60)
-  const [colsInput, setColsInput] = useState(60)
-  const [zoom, setZoom] = useState(1)
-  const [showControlsInfo, setShowControlsInfo] = useState(false)
-  const [lines, setLines] = useState<[Point, Point][]>([])
-  const [coloredCells, setColoredCells] = useState<Set<string>>(new Set())
+  const [gridSize, setGridSize] = useState<{ rows: number; cols: number } | null>(null);
+  const [rowsInput, setRowsInput] = useState(60);
+  const [colsInput, setColsInput] = useState(60);
+  const [zoom, setZoom] = useState(1);
+  const [showControlsInfo, setShowControlsInfo] = useState(false);
+  const [lines, setLines] = useState<Line[]>([]);
+  const [coloredCells, setColoredCells] = useState<Map<string, string>>(new Map());
+  const [palette, setPalette] = useState<string[]>([]);
+  const [selectedColor, setSelectedColor] = useState<string | null>(null);
 
   const handleCreateGrid = (e: React.FormEvent) => {
     e.preventDefault();
@@ -29,11 +28,9 @@ function App() {
 
     const projectData = {
       gridSize,
-      lines: lines.map(([start, end]) => ({
-        start: { x: start.x, y: start.y },
-        end: { x: end.x, y: end.y },
-      })),
-      coloredCells: Array.from(coloredCells),
+      lines,
+      coloredCells: Array.from(coloredCells.entries()),
+      palette,
     };
 
     const zip = new JSZip();
@@ -80,13 +77,9 @@ function App() {
         projectFile.async("string").then((content: string) => {
           const projectData = JSON.parse(content);
           setGridSize(projectData.gridSize);
-          setLines(
-            projectData.lines.map((line: any) => [
-              { x: line.start.x, y: line.start.y },
-              { x: line.end.x, y: line.end.y },
-            ])
-          );
-          setColoredCells(new Set(projectData.coloredCells));
+          setLines(projectData.lines);
+          setColoredCells(new Map(projectData.coloredCells));
+          setPalette(projectData.palette);
         });
       }
     });
@@ -125,30 +118,39 @@ function App() {
             </label>
           </form>
         ) : (
-          <div>
-            <div className="controls">
-              <button onClick={() => setZoom(z => z * 1.2)}>Zoom In</button>
-              <button onClick={() => setZoom(z => z / 1.2)}>Zoom Out</button>
-              <button onClick={() => setZoom(1)}>Reset Zoom</button>
-              <button onClick={() => setShowControlsInfo(true)}>How to Use</button>
-              <button onClick={() => setGridSize(null)}>Reset Grid</button>
-              <button onClick={handleExport}>Export Project</button>
+          <div className="main-content">
+            <div className="canvas-section">
+              <div className="controls">
+                <button onClick={() => setZoom(z => z * 1.2)}>Zoom In</button>
+                <button onClick={() => setZoom(z => z / 1.2)}>Zoom Out</button>
+                <button onClick={() => setZoom(1)}>Reset Zoom</button>
+                <button onClick={() => setShowControlsInfo(true)}>How to Use</button>
+                <button onClick={() => setGridSize(null)}>Reset Grid</button>
+                <button onClick={handleExport}>Export Project</button>
+              </div>
+              <Canvas
+                rows={gridSize.rows}
+                cols={gridSize.cols}
+                zoom={zoom}
+                lines={lines}
+                setLines={setLines}
+                coloredCells={coloredCells}
+                setColoredCells={setColoredCells}
+                selectedColor={selectedColor}
+              />
             </div>
-            <Canvas
-              rows={gridSize.rows}
-              cols={gridSize.cols}
-              zoom={zoom}
-              lines={lines}
-              setLines={setLines}
-              coloredCells={coloredCells}
-              setColoredCells={setColoredCells}
+            <Palette
+              palette={palette}
+              setPalette={setPalette}
+              selectedColor={selectedColor}
+              setSelectedColor={setSelectedColor}
             />
           </div>
         )}
         {showControlsInfo && <ControlsInfo onClose={() => setShowControlsInfo(false)} />}
       </main>
     </div>
-  )
+  );
 }
 
-export default App
+export default App;

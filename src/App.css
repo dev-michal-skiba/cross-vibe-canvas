@@ -58,6 +58,17 @@ main {
   flex-direction: column;
 }
 
+.main-content {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 20px;
+}
+
+.canvas-section {
+  display: flex;
+  flex-direction: column;
+}
+
 .import-button {
   position: relative;
   overflow: hidden;
