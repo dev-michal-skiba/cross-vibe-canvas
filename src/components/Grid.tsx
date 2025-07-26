@@ -67,6 +67,22 @@ const Grid: React.FC<GridProps> = ({
   const linesCanvas = useMemo(() => document.createElement('canvas'), []);
   const gridCanvas = useMemo(() => document.createElement('canvas'), []);
 
+  const getMousePos = useCallback((evt: React.MouseEvent): Point | null => {
+    const canvas = mainCanvasRef.current;
+    if (!canvas) return null;
+    const rect = canvas.getBoundingClientRect();
+    return {
+      x: (evt.clientX - rect.left) / (size * zoom),
+      y: (evt.clientY - rect.top) / (size * zoom),
+    };
+  }, [size, zoom]);
+
+  const getSnappedPos = useCallback((pos: Point): Point => {
+    const snapX = Math.round(pos.x * 2) / 2;
+    const snapY = Math.round(pos.y * 2) / 2;
+    return { x: snapX, y: snapY };
+  }, []);
+
   // Draw background image
   useEffect(() => {
     backgroundCanvas.width = width;
@@ -110,11 +126,11 @@ const Grid: React.FC<GridProps> = ({
     lines.forEach(({ start, end, color }) => {
       ctx.strokeStyle = color;
       ctx.beginPath();
-      ctx.moveTo(start.x, start.y);
-      ctx.lineTo(end.x, end.y);
+      ctx.moveTo(start.x * size, start.y * size);
+      ctx.lineTo(end.x * size, end.y * size);
       ctx.stroke();
     });
-  }, [lines, width, height, linesCanvas]);
+  }, [lines, width, height, linesCanvas, size]);
   
   // Draw grid
   useEffect(() => {
@@ -173,46 +189,32 @@ const Grid: React.FC<GridProps> = ({
     if (isDrawing && startPoint && endPoint) {
       ctx.strokeStyle = selectedColor || 'black';
       ctx.beginPath();
-      ctx.moveTo(startPoint.x, startPoint.y);
-      ctx.lineTo(endPoint.x, endPoint.y);
+      ctx.moveTo(startPoint.x * size, startPoint.y * size);
+      ctx.lineTo(endPoint.x * size, endPoint.y * size);
       ctx.stroke();
     }
   }, [
     width, height, backgroundImage, imageOpacity, stitchOpacity, crossLinesOpacity, gridOpacity,
     backgroundCanvas, fillsCanvas, linesCanvas, gridCanvas,
     isDrawing, startPoint, endPoint, selectedColor,
-    lines, coloredCells, redrawCounter
+    lines, coloredCells, redrawCounter, size
   ]);
-
-  const getSnappedPos = useCallback((pos: Point): Point => {
-    const snapSize = size / 2;
-    const x = Math.round(pos.x / snapSize) * snapSize;
-    const y = Math.round(pos.y / snapSize) * snapSize;
-    return { x, y };
-  }, [size]);
 
   const findClickedLine = (clickPos: Point): number | null => {
     const CLICK_THRESHOLD = 5 / zoom;
     let closestLineIndex: number | null = null;
     let minDistance = Infinity;
     lines.forEach((line, index) => {
-      const distance = pointToLineSegmentDistance(clickPos, line.start, line.end);
+      const p1 = { x: line.start.x * size, y: line.start.y * size };
+      const p2 = { x: line.end.x * size, y: line.end.y * size };
+      const clickPosPixels = { x: clickPos.x * size, y: clickPos.y * size };
+      const distance = pointToLineSegmentDistance(clickPosPixels, p1, p2);
       if (distance < CLICK_THRESHOLD && distance < minDistance) {
         minDistance = distance;
         closestLineIndex = index;
       }
     });
     return closestLineIndex;
-  };
-
-  const getMousePos = (evt: React.MouseEvent): Point | null => {
-    const canvas = mainCanvasRef.current;
-    if (!canvas) return null;
-    const rect = canvas.getBoundingClientRect();
-    return {
-      x: (evt.clientX - rect.left) / zoom,
-      y: (evt.clientY - rect.top) / zoom,
-    };
   };
 
   const handleMouseDown = useCallback((evt: React.MouseEvent) => {
@@ -231,7 +233,7 @@ const Grid: React.FC<GridProps> = ({
       setStartPoint(snappedPos);
       setEndPoint(snappedPos);
     }
-  }, [selectedColor, getSnappedPos]);
+  }, [selectedColor, getSnappedPos, getMousePos]);
 
   const handleMouseMove = useCallback((evt: React.MouseEvent) => {
     if (!isDrawing) return;
@@ -239,7 +241,7 @@ const Grid: React.FC<GridProps> = ({
     if (!pos) return;
     const snappedPos = getSnappedPos(pos);
     setEndPoint(snappedPos);
-  }, [isDrawing, getSnappedPos]);
+  }, [isDrawing, getSnappedPos, getMousePos]);
 
   const handleMouseUp = useCallback((evt: React.MouseEvent) => {
     const pos = getMousePos(evt);
@@ -256,8 +258,8 @@ const Grid: React.FC<GridProps> = ({
           alert("Please select a color from the palette before filling cells.");
           return;
         }
-        const col = Math.floor(pos.x / size);
-        const row = Math.floor(pos.y / size);
+        const col = Math.floor(pos.x);
+        const row = Math.floor(pos.y);
         setColoredCells(prev => new Map(prev).set(`${row}-${col}`, selectedColor));
       }
     }
@@ -266,7 +268,7 @@ const Grid: React.FC<GridProps> = ({
     setStartPoint(null);
     setEndPoint(null);
     setMouseDownPos(null);
-  }, [isDrawing, selectedColor, startPoint, endPoint, mouseDownPos, lines, setLines, setColoredCells, size]);
+  }, [isDrawing, selectedColor, startPoint, endPoint, mouseDownPos, lines, setLines, setColoredCells, size, getMousePos]);
 
   const handleContextMenu = (evt: React.MouseEvent) => {
     evt.preventDefault();
@@ -279,8 +281,8 @@ const Grid: React.FC<GridProps> = ({
         setLines(lines.filter((_, index) => index !== lineIndex));
       }
     } else {
-      const col = Math.floor(pos.x / size);
-      const row = Math.floor(pos.y / size);
+      const col = Math.floor(pos.x);
+      const row = Math.floor(pos.y);
       setColoredCells(prev => {
         const newCells = new Map(prev);
         newCells.delete(`${row}-${col}`);
