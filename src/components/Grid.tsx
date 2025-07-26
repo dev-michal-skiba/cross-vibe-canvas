@@ -55,7 +55,7 @@ const Grid: React.FC<GridProps> = ({
   const [startPoint, setStartPoint] = useState<Point | null>(null);
   const [endPoint, setEndPoint] = useState<Point | null>(null);
   const [mouseDownPos, setMouseDownPos] = useState<Point | null>(null);
-  const [isBgImageLoaded, setIsBgImageLoaded] = useState(false);
+  const [redrawCounter, setRedrawCounter] = useState(0);
 
   const { width, height } = useMemo(() => ({
     width: cols * size,
@@ -75,15 +75,14 @@ const Grid: React.FC<GridProps> = ({
     if (!ctx) return;
     ctx.clearRect(0, 0, width, height);
     if (backgroundImage) {
-      setIsBgImageLoaded(false);
       const img = new Image();
       img.src = backgroundImage;
       img.onload = () => {
         ctx.drawImage(img, 0, 0, width, height);
-        setIsBgImageLoaded(true);
+        setRedrawCounter(c => c + 1);
       };
     } else {
-      setIsBgImageLoaded(true);
+      setRedrawCounter(c => c + 1);
     }
   }, [backgroundImage, width, height, backgroundCanvas]);
 
@@ -182,7 +181,7 @@ const Grid: React.FC<GridProps> = ({
     width, height, backgroundImage, imageOpacity, stitchOpacity, crossLinesOpacity, gridOpacity,
     backgroundCanvas, fillsCanvas, linesCanvas, gridCanvas,
     isDrawing, startPoint, endPoint, selectedColor,
-    lines, coloredCells, isBgImageLoaded
+    lines, coloredCells, redrawCounter
   ]);
 
   const getSnappedPos = useCallback((pos: Point): Point => {
