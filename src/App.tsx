@@ -19,6 +19,7 @@ function App() {
   const [palette, setPalette] = useState<string[]>([]);
   const [selectedColorIndex, setSelectedColorIndex] = useState<number | null>(null);
   const [backgroundImage, setBackgroundImage] = useState<string | null>(null);
+  const [backgroundImageFile, setBackgroundImageFile] = useState<File | null>(null);
   const [imageOpacity, setImageOpacity] = useState(1);
   const [gridOpacity, setGridOpacity] = useState(1);
   const [fillsOpacity, setFillsOpacity] = useState(1);
@@ -33,6 +34,7 @@ function App() {
     setPalette([]);
     setSelectedColorIndex(null);
     setBackgroundImage(null);
+    setBackgroundImageFile(null);
     setZoom(1.0);
     setImageOpacity(1);
     setGridOpacity(1);
@@ -82,19 +84,31 @@ function App() {
   const handleExport = async () => {
     if (!gridSize) return;
 
+    const zip = new JSZip();
+    let backgroundImageValue = null;
+
+    if (backgroundImageFile) {
+      backgroundImageValue = backgroundImageFile.name;
+      zip.file(backgroundImageFile.name, backgroundImageFile);
+    } else if (backgroundImage) {
+      backgroundImageValue = backgroundImage;
+    }
+
     const projectData = {
       gridSize,
       lines,
       coloredCells: Array.from(coloredCells.entries()),
       palette,
-      backgroundImage,
+      selectedColorIndex,
+      backgroundImage: backgroundImageValue,
       imageOpacity,
       gridOpacity,
       fillsOpacity,
       linesOpacity,
+      stitchOpacity,
+      crossLinesOpacity,
     };
 
-    const zip = new JSZip();
     zip.file("project.json", JSON.stringify(projectData));
     const content = await zip.generateAsync({ type: "blob" });
 
@@ -141,11 +155,41 @@ function App() {
           setLines(projectData.lines);
           setColoredCells(new Map(projectData.coloredCells));
           setPalette(projectData.palette);
-          setBackgroundImage(projectData.backgroundImage);
+          setSelectedColorIndex(projectData.selectedColorIndex ?? null);
+
+          if (projectData.backgroundImage) {
+            if (typeof projectData.backgroundImage === 'string' && projectData.backgroundImage.startsWith('data:image')) {
+              setBackgroundImage(projectData.backgroundImage);
+              setBackgroundImageFile(null);
+            } else {
+              const imageFile = zip.file(projectData.backgroundImage);
+              if (imageFile) {
+                imageFile.async("blob").then((blob: Blob) => {
+                  const reader = new FileReader();
+                  reader.onloadend = () => {
+                    setBackgroundImage(reader.result as string);
+                  };
+                  reader.readAsDataURL(blob);
+
+                  const rehydratedFile = new File([blob], projectData.backgroundImage, { type: blob.type });
+                  setBackgroundImageFile(rehydratedFile);
+                });
+              } else {
+                setBackgroundImage(null);
+                setBackgroundImageFile(null);
+              }
+            }
+          } else {
+            setBackgroundImage(null);
+            setBackgroundImageFile(null);
+          }
+
           setImageOpacity(projectData.imageOpacity ?? 1);
           setGridOpacity(projectData.gridOpacity ?? 1);
           setFillsOpacity(projectData.fillsOpacity ?? 1);
           setLinesOpacity(projectData.linesOpacity ?? 1);
+          setStitchOpacity(projectData.stitchOpacity ?? 1);
+          setCrossLinesOpacity(projectData.crossLinesOpacity ?? 1);
         });
       }
     });
@@ -154,6 +198,7 @@ function App() {
   const handleBackgroundImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      setBackgroundImageFile(file);
       const reader = new FileReader();
       reader.onloadend = () => {
         setBackgroundImage(reader.result as string);
