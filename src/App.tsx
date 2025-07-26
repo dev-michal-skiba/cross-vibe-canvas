@@ -17,6 +17,11 @@ function App() {
   const [coloredCells, setColoredCells] = useState<Map<string, string>>(new Map());
   const [palette, setPalette] = useState<string[]>([]);
   const [selectedColor, setSelectedColor] = useState<string | null>(null);
+  const [backgroundImage, setBackgroundImage] = useState<string | null>(null);
+  const [imageOpacity, setImageOpacity] = useState(1);
+  const [gridOpacity, setGridOpacity] = useState(1);
+  const [fillsOpacity, setFillsOpacity] = useState(1);
+  const [linesOpacity, setLinesOpacity] = useState(1);
 
   const handleCreateGrid = (e: React.FormEvent) => {
     e.preventDefault();
@@ -31,6 +36,11 @@ function App() {
       lines,
       coloredCells: Array.from(coloredCells.entries()),
       palette,
+      backgroundImage,
+      imageOpacity,
+      gridOpacity,
+      fillsOpacity,
+      linesOpacity,
     };
 
     const zip = new JSZip();
@@ -50,7 +60,7 @@ function App() {
         await writable.write(content);
         await writable.close();
         return;
-      } catch (err) {
+      } catch (err: any) {
         if (err.name === 'AbortError') {
           return;
         }
@@ -80,9 +90,25 @@ function App() {
           setLines(projectData.lines);
           setColoredCells(new Map(projectData.coloredCells));
           setPalette(projectData.palette);
+          setBackgroundImage(projectData.backgroundImage);
+          setImageOpacity(projectData.imageOpacity ?? 1);
+          setGridOpacity(projectData.gridOpacity ?? 1);
+          setFillsOpacity(projectData.fillsOpacity ?? 1);
+          setLinesOpacity(projectData.linesOpacity ?? 1);
         });
       }
     });
+  };
+
+  const handleBackgroundImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setBackgroundImage(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   return (
@@ -127,6 +153,56 @@ function App() {
                 <button onClick={() => setShowControlsInfo(true)}>How to Use</button>
                 <button onClick={() => setGridSize(null)}>Reset Grid</button>
                 <button onClick={handleExport}>Export Project</button>
+                <label className="import-button">
+                  Add Background
+                  <input type="file" onChange={handleBackgroundImageUpload} accept="image/*" />
+                </label>
+              </div>
+              <div className="sliders">
+                <label>
+                  Image Opacity:
+                  <input
+                    type="range"
+                    min="0"
+                    max="1"
+                    step="0.01"
+                    value={imageOpacity}
+                    onChange={(e) => setImageOpacity(parseFloat(e.target.value))}
+                  />
+                </label>
+                <label>
+                  Grid Opacity:
+                  <input
+                    type="range"
+                    min="0"
+                    max="1"
+                    step="0.01"
+                    value={gridOpacity}
+                    onChange={(e) => setGridOpacity(parseFloat(e.target.value))}
+                  />
+                </label>
+                <label>
+                  Fills Opacity:
+                  <input
+                    type="range"
+                    min="0"
+                    max="1"
+                    step="0.01"
+                    value={fillsOpacity}
+                    onChange={(e) => setFillsOpacity(parseFloat(e.target.value))}
+                  />
+                </label>
+                <label>
+                  Lines Opacity:
+                  <input
+                    type="range"
+                    min="0"
+                    max="1"
+                    step="0.01"
+                    value={linesOpacity}
+                    onChange={(e) => setLinesOpacity(parseFloat(e.target.value))}
+                  />
+                </label>
               </div>
               <Canvas
                 rows={gridSize.rows}
@@ -137,6 +213,11 @@ function App() {
                 coloredCells={coloredCells}
                 setColoredCells={setColoredCells}
                 selectedColor={selectedColor}
+                backgroundImage={backgroundImage}
+                imageOpacity={imageOpacity}
+                gridOpacity={gridOpacity}
+                fillsOpacity={fillsOpacity}
+                linesOpacity={linesOpacity}
               />
             </div>
             <Palette

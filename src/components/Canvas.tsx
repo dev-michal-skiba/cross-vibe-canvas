@@ -12,6 +12,11 @@ interface CanvasProps {
   coloredCells: Map<string, string>;
   setColoredCells: React.Dispatch<React.SetStateAction<Map<string, string>>>;
   selectedColor: string | null;
+  backgroundImage: string | null;
+  imageOpacity: number;
+  gridOpacity: number;
+  fillsOpacity: number;
+  linesOpacity: number;
 }
 
 const PADDING = 20;
@@ -25,6 +30,11 @@ const Canvas: React.FC<CanvasProps> = ({
   coloredCells,
   setColoredCells,
   selectedColor,
+  backgroundImage,
+  imageOpacity,
+  gridOpacity,
+  fillsOpacity,
+  linesOpacity,
 }) => {
   const canvasRef = useRef<HTMLDivElement>(null);
   const [cellSize, setCellSize] = useState(0);
@@ -65,7 +75,7 @@ const Canvas: React.FC<CanvasProps> = ({
         width: `${gridWidth}px`,
         height: `${gridHeight}px`,
       }}>
-        <Grid
+        {cellSize > 0 && <Grid
           rows={rows}
           cols={cols}
           size={cellSize}
@@ -75,7 +85,12 @@ const Canvas: React.FC<CanvasProps> = ({
           coloredCells={coloredCells}
           setColoredCells={setColoredCells}
           selectedColor={selectedColor}
-        />
+          backgroundImage={backgroundImage}
+          imageOpacity={imageOpacity}
+          gridOpacity={gridOpacity}
+          fillsOpacity={fillsOpacity}
+          linesOpacity={linesOpacity}
+        />}
       </div>
     </div>
   );

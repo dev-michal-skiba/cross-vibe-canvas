@@ -69,6 +69,12 @@ main {
   flex-direction: column;
 }
 
+.sliders {
+  display: flex;
+  gap: 20px;
+  margin: 10px 0;
+}
+
 .import-button {
   position: relative;
   overflow: hidden;

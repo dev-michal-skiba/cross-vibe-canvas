@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useState } from 'react';
+import React, { useRef, useEffect, useState, useMemo } from 'react';
 import type { Line, Point } from '../types';
 import './Grid.css';
 
@@ -12,6 +12,11 @@ interface GridProps {
   coloredCells: Map<string, string>;
   setColoredCells: React.Dispatch<React.SetStateAction<Map<string, string>>>;
   selectedColor: string | null;
+  backgroundImage: string | null;
+  imageOpacity: number;
+  gridOpacity: number;
+  fillsOpacity: number;
+  linesOpacity: number;
 }
 
 function pointToLineSegmentDistance(p: Point, p1: Point, p2: Point): number {
@@ -39,29 +44,86 @@ const Grid: React.FC<GridProps> = ({
   coloredCells,
   setColoredCells,
   selectedColor,
+  backgroundImage,
+  imageOpacity,
+  gridOpacity,
+  fillsOpacity,
+  linesOpacity,
 }) => {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const mainCanvasRef = useRef<HTMLCanvasElement>(null);
   const [isDrawing, setIsDrawing] = useState(false);
   const [startPoint, setStartPoint] = useState<Point | null>(null);
   const [endPoint, setEndPoint] = useState<Point | null>(null);
   const [mouseDownPos, setMouseDownPos] = useState<Point | null>(null);
+  const [isBgImageLoaded, setIsBgImageLoaded] = useState(false);
 
+  const { width, height } = useMemo(() => ({
+    width: cols * size,
+    height: rows * size,
+  }), [cols, size, rows]);
+
+  const backgroundCanvas = useMemo(() => document.createElement('canvas'), []);
+  const fillsCanvas = useMemo(() => document.createElement('canvas'), []);
+  const linesCanvas = useMemo(() => document.createElement('canvas'), []);
+  const gridCanvas = useMemo(() => document.createElement('canvas'), []);
+
+  // Draw background image
   useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
+    backgroundCanvas.width = width;
+    backgroundCanvas.height = height;
+    const ctx = backgroundCanvas.getContext('2d');
     if (!ctx) return;
+    ctx.clearRect(0, 0, width, height);
+    if (backgroundImage) {
+      setIsBgImageLoaded(false);
+      const img = new Image();
+      img.src = backgroundImage;
+      img.onload = () => {
+        ctx.drawImage(img, 0, 0, width, height);
+        setIsBgImageLoaded(true);
+      };
+    } else {
+      setIsBgImageLoaded(true);
+    }
+  }, [backgroundImage, width, height, backgroundCanvas]);
 
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    canvas.width = cols * size;
-    canvas.height = rows * size;
-
+  // Draw fills
+  useEffect(() => {
+    fillsCanvas.width = width;
+    fillsCanvas.height = height;
+    const ctx = fillsCanvas.getContext('2d');
+    if (!ctx) return;
+    ctx.clearRect(0, 0, width, height);
     coloredCells.forEach((color, cell) => {
       ctx.fillStyle = color;
       const [row, col] = cell.split('-').map(Number);
       ctx.fillRect(col * size, row * size, size, size);
     });
+  }, [coloredCells, width, height, size, fillsCanvas]);
 
+  // Draw lines
+  useEffect(() => {
+    linesCanvas.width = width;
+    linesCanvas.height = height;
+    const ctx = linesCanvas.getContext('2d');
+    if (!ctx) return;
+    ctx.clearRect(0, 0, width, height);
+    lines.forEach(({ start, end, color }) => {
+      ctx.strokeStyle = color;
+      ctx.beginPath();
+      ctx.moveTo(start.x, start.y);
+      ctx.lineTo(end.x, end.y);
+      ctx.stroke();
+    });
+  }, [lines, width, height, linesCanvas]);
+  
+  // Draw grid
+  useEffect(() => {
+    gridCanvas.width = width;
+    gridCanvas.height = height;
+    const ctx = gridCanvas.getContext('2d');
+    if (!ctx) return;
+    ctx.clearRect(0, 0, width, height);
     ctx.strokeStyle = '#ccc';
     ctx.lineWidth = 1;
     for (let i = 0; i <= rows; i++) {
@@ -76,15 +138,39 @@ const Grid: React.FC<GridProps> = ({
       ctx.lineTo(i * size, rows * size);
       ctx.stroke();
     }
+  }, [rows, cols, size, width, height, gridCanvas]);
+  
+  // Composite all layers
+  useEffect(() => {
+    const canvas = mainCanvasRef.current;
+    if (!canvas) return;
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
 
-    lines.forEach(({ start, end, color }) => {
-      ctx.strokeStyle = color;
-      ctx.beginPath();
-      ctx.moveTo(start.x, start.y);
-      ctx.lineTo(end.x, end.y);
-      ctx.stroke();
-    });
+    ctx.clearRect(0, 0, width, height);
 
+    // Draw background
+    if (backgroundImage) {
+      ctx.globalAlpha = imageOpacity;
+      ctx.drawImage(backgroundCanvas, 0, 0);
+    }
+
+    // Draw grid
+    ctx.globalAlpha = gridOpacity;
+    ctx.drawImage(gridCanvas, 0, 0);
+
+    // Draw fills
+    ctx.globalAlpha = fillsOpacity;
+    ctx.drawImage(fillsCanvas, 0, 0);
+
+    // Draw lines
+    ctx.globalAlpha = linesOpacity;
+    ctx.drawImage(linesCanvas, 0, 0);
+
+    // Reset alpha for temporary drawing
+    ctx.globalAlpha = 1;
     if (isDrawing && startPoint && endPoint) {
       ctx.strokeStyle = selectedColor || 'black';
       ctx.beginPath();
@@ -92,7 +178,12 @@ const Grid: React.FC<GridProps> = ({
       ctx.lineTo(endPoint.x, endPoint.y);
       ctx.stroke();
     }
-  }, [rows, cols, size, lines, isDrawing, startPoint, endPoint, coloredCells, selectedColor]);
+  }, [
+    width, height, backgroundImage, imageOpacity, fillsOpacity, linesOpacity, gridOpacity,
+    backgroundCanvas, fillsCanvas, linesCanvas, gridCanvas,
+    isDrawing, startPoint, endPoint, selectedColor,
+    lines, coloredCells, isBgImageLoaded
+  ]);
 
   const findClickedLine = (clickPos: Point): number | null => {
     const CLICK_THRESHOLD = 5 / zoom;
@@ -109,7 +200,7 @@ const Grid: React.FC<GridProps> = ({
   };
 
   const getMousePos = (evt: React.MouseEvent): Point | null => {
-    const canvas = canvasRef.current;
+    const canvas = mainCanvasRef.current;
     if (!canvas) return null;
     const rect = canvas.getBoundingClientRect();
     return {
@@ -200,7 +291,7 @@ const Grid: React.FC<GridProps> = ({
 
   return (
     <canvas
-      ref={canvasRef}
+      ref={mainCanvasRef}
       className="grid-canvas"
       onMouseDown={handleMouseDown}
       onMouseMove={handleMouseMove}
