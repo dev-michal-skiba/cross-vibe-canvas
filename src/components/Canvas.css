@@ -1,5 +1,8 @@
 .canvas-container {
-  width: 60vh;
-  height: 60vh;
-  margin-top: 20px;
+  flex-grow: 1;
+  overflow: auto;
+  padding: 20px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }

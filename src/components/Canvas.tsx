@@ -2,6 +2,7 @@ import React, { useLayoutEffect, useRef, useState } from 'react';
 import Grid from './Grid';
 import './Canvas.css';
 import type { Line } from '../types';
+import { useResizeObserver } from '../hooks/useResizeObserver';
 
 interface CanvasProps {
   rows: number;
@@ -15,11 +16,9 @@ interface CanvasProps {
   backgroundImage: string | null;
   imageOpacity: number;
   gridOpacity: number;
-  fillsOpacity: number;
-  linesOpacity: number;
+  stitchOpacity: number;
+  crossLinesOpacity: number;
 }
-
-const PADDING = 20;
 
 const Canvas: React.FC<CanvasProps> = ({
   rows,
@@ -33,47 +32,40 @@ const Canvas: React.FC<CanvasProps> = ({
   backgroundImage,
   imageOpacity,
   gridOpacity,
-  fillsOpacity,
-  linesOpacity,
+  stitchOpacity,
+  crossLinesOpacity,
 }) => {
-  const canvasRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const resizeEntry = useResizeObserver(containerRef as React.RefObject<HTMLElement>);
   const [cellSize, setCellSize] = useState(0);
   const [gridWidth, setGridWidth] = useState(0);
   const [gridHeight, setGridHeight] = useState(0);
 
   useLayoutEffect(() => {
-    if (canvasRef.current) {
-      let { clientWidth, clientHeight } = canvasRef.current;
-      clientWidth -= PADDING;
-      clientHeight -= PADDING;
-      let cellSize: number;
-      if (cols > rows) {
-        cellSize = clientWidth / cols;
-        setCellSize(cellSize);
-      } else {
-        cellSize = clientHeight / rows;
-        setCellSize(cellSize);
-      }
-      setGridWidth(cellSize * cols);
-      setGridHeight(cellSize * rows);
+    if (resizeEntry) {
+      const { width, height } = resizeEntry.contentRect;
+      const hCellSize = height / rows;
+      const wCellSize = width / cols;
+      const newCellSize = Math.min(hCellSize, wCellSize);
+      setCellSize(newCellSize);
+      setGridWidth(newCellSize * cols);
+      setGridHeight(newCellSize * rows);
     }
-  }, [rows, cols]);
+  }, [rows, cols, resizeEntry]);
 
   return (
     <div
-      ref={canvasRef}
+      ref={containerRef}
       className="canvas-container"
-      style={{
-        overflow: zoom > 1 ? 'auto' : 'hidden',
-        padding: `${PADDING}px`,
-      }}
     >
       <div style={{
-        display: 'inline-block',
-        transform: `scale(${zoom})`,
-        transformOrigin: 'top left',
         width: `${gridWidth}px`,
         height: `${gridHeight}px`,
+        transform: `scale(${zoom})`,
+        transformOrigin: 'top left',
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
       }}>
         {cellSize > 0 && <Grid
           rows={rows}
@@ -88,8 +80,8 @@ const Canvas: React.FC<CanvasProps> = ({
           backgroundImage={backgroundImage}
           imageOpacity={imageOpacity}
           gridOpacity={gridOpacity}
-          fillsOpacity={fillsOpacity}
-          linesOpacity={linesOpacity}
+          stitchOpacity={stitchOpacity}
+          crossLinesOpacity={crossLinesOpacity}
         />}
       </div>
     </div>

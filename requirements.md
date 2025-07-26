@@ -25,3 +25,4 @@ A web application for creating cross-stitching patterns based on an uploaded ima
 - A backend is not required — everything can run in the browser.
 - Responsive design and smooth interaction (e.g., when zooming or resizing the grid) are preferred.
 - The `.zip` file can be generated using a library like JSZip.
+image.png

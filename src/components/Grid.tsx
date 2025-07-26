@@ -15,8 +15,8 @@ interface GridProps {
   backgroundImage: string | null;
   imageOpacity: number;
   gridOpacity: number;
-  fillsOpacity: number;
-  linesOpacity: number;
+  stitchOpacity: number;
+  crossLinesOpacity: number;
 }
 
 function pointToLineSegmentDistance(p: Point, p1: Point, p2: Point): number {
@@ -47,8 +47,8 @@ const Grid: React.FC<GridProps> = ({
   backgroundImage,
   imageOpacity,
   gridOpacity,
-  fillsOpacity,
-  linesOpacity,
+  stitchOpacity,
+  crossLinesOpacity,
 }) => {
   const mainCanvasRef = useRef<HTMLCanvasElement>(null);
   const [isDrawing, setIsDrawing] = useState(false);
@@ -162,11 +162,11 @@ const Grid: React.FC<GridProps> = ({
     ctx.drawImage(gridCanvas, 0, 0);
 
     // Draw fills
-    ctx.globalAlpha = fillsOpacity;
+    ctx.globalAlpha = stitchOpacity;
     ctx.drawImage(fillsCanvas, 0, 0);
 
     // Draw lines
-    ctx.globalAlpha = linesOpacity;
+    ctx.globalAlpha = crossLinesOpacity;
     ctx.drawImage(linesCanvas, 0, 0);
 
     // Reset alpha for temporary drawing
@@ -179,7 +179,7 @@ const Grid: React.FC<GridProps> = ({
       ctx.stroke();
     }
   }, [
-    width, height, backgroundImage, imageOpacity, fillsOpacity, linesOpacity, gridOpacity,
+    width, height, backgroundImage, imageOpacity, stitchOpacity, crossLinesOpacity, gridOpacity,
     backgroundCanvas, fillsCanvas, linesCanvas, gridCanvas,
     isDrawing, startPoint, endPoint, selectedColor,
     lines, coloredCells, isBgImageLoaded
