@@ -2,16 +2,33 @@ import React, { useLayoutEffect, useRef, useState } from 'react';
 import Grid from './Grid';
 import './Canvas.css';
 
+interface Point {
+  x: number;
+  y: number;
+}
+
 interface CanvasProps {
   rows: number;
   cols: number;
   zoom: number;
+  lines: [Point, Point][];
+  setLines: React.Dispatch<React.SetStateAction<[Point, Point][]>>;
+  coloredCells: Set<string>;
+  setColoredCells: React.Dispatch<React.SetStateAction<Set<string>>>;
 }
 
 const PADDING = 20
 
 
-const Canvas: React.FC<CanvasProps> = ({ rows, cols, zoom }) => {
+const Canvas: React.FC<CanvasProps> = ({
+  rows,
+  cols,
+  zoom,
+  lines,
+  setLines,
+  coloredCells,
+  setColoredCells,
+}) => {
   const canvasRef = useRef<HTMLDivElement>(null);
   const [cellSize, setCellSize] = useState(0);
   const [gridWidth, setGridWidth] = useState(0);
@@ -51,7 +68,16 @@ const Canvas: React.FC<CanvasProps> = ({ rows, cols, zoom }) => {
         width: `${gridWidth}px`,
         height: `${gridHeight}px`,
       }}>
-        <Grid rows={rows} cols={cols} size={cellSize} zoom={zoom}/>
+        <Grid
+          rows={rows}
+          cols={cols}
+          size={cellSize}
+          zoom={zoom}
+          lines={lines}
+          setLines={setLines}
+          coloredCells={coloredCells}
+          setColoredCells={setColoredCells}
+        />
       </div>
     </div>
   );

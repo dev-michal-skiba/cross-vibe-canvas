@@ -13,7 +13,7 @@ To run this project, you will need:
 1.  **Build and Start the Container**
     Run the following command in the project root directory:
     ```sh
-    docker compose up --build -d
+    docker compose up --build
     ```
     This command builds the Docker image, creates a container, and starts the development server in detached mode.
 

@@ -8,9 +8,7 @@ services:
     ports:
       - "5173:5173"
     volumes:
-      # Mount the src directory for hot-reloading
-      - ./src:/app/src
-    # Keep stdin open to allow attaching to the container
+      - .:/app
+      - /app/node_modules
     stdin_open: true
-    # Enable TTY for an interactive shell
     tty: true 

@@ -1,16 +1,20 @@
 import React, { useRef, useEffect, useState } from 'react';
 import './Grid.css';
 
+interface Point {
+  x: number;
+  y: number;
+}
+
 interface GridProps {
   rows: number;
   cols: number;
   size: number;
   zoom: number;
-}
-
-interface Point {
-  x: number;
-  y: number;
+  lines: [Point, Point][];
+  setLines: React.Dispatch<React.SetStateAction<[Point, Point][]>>;
+  coloredCells: Set<string>;
+  setColoredCells: React.Dispatch<React.SetStateAction<Set<string>>>;
 }
 
 function pointToLineSegmentDistance(p: Point, p1: Point, p2: Point): number {
@@ -28,13 +32,20 @@ function pointToLineSegmentDistance(p: Point, p1: Point, p2: Point): number {
   return Math.sqrt((p.x - projection.x) ** 2 + (p.y - projection.y) ** 2);
 }
 
-const Grid: React.FC<GridProps> = ({ rows, cols, size, zoom }) => {
+const Grid: React.FC<GridProps> = ({
+  rows,
+  cols,
+  size,
+  zoom,
+  lines,
+  setLines,
+  coloredCells,
+  setColoredCells,
+}) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isDrawing, setIsDrawing] = useState(false);
   const [startPoint, setStartPoint] = useState<Point | null>(null);
   const [endPoint, setEndPoint] = useState<Point | null>(null);
-  const [lines, setLines] = useState<[Point, Point][]>([]);
-  const [coloredCells, setColoredCells] = useState<Set<string>>(new Set());
   const [mouseDownPos, setMouseDownPos] = useState<Point | null>(null);
 
   useEffect(() => {
