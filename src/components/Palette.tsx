@@ -3,14 +3,14 @@ import './Palette.css';
 
 interface PaletteProps {
   palette: string[];
-  selectedColor: string | null;
-  setSelectedColor: React.Dispatch<React.SetStateAction<string | null>>;
+  selectedColorIndex: number | null;
+  setSelectedColorIndex: React.Dispatch<React.SetStateAction<number | null>>;
   onAddColor: (newColor: string) => void;
-  onRemoveColor: (color: string) => void;
-  onEditColor: (oldColor: string, newColor: string) => void;
+  onRemoveColor: (index: number) => void;
+  onEditColor: (index: number, newColor: string) => void;
 }
 
-const Palette: React.FC<PaletteProps> = ({ palette, selectedColor, setSelectedColor, onAddColor, onRemoveColor, onEditColor }) => {
+const Palette: React.FC<PaletteProps> = ({ palette, selectedColorIndex, setSelectedColorIndex, onAddColor, onRemoveColor, onEditColor }) => {
   return (
     <div>
       <div className="palette">
@@ -18,19 +18,21 @@ const Palette: React.FC<PaletteProps> = ({ palette, selectedColor, setSelectedCo
           <div
             key={index}
             title={color}
-            className={`color-swatch ${selectedColor === color ? 'selected' : ''}`}
+            className={`color-swatch ${selectedColorIndex === index ? 'selected' : ''}`}
             style={{ backgroundColor: color }}
-            onClick={() => setSelectedColor(color)}
+            onClick={() => setSelectedColorIndex(index)}
+            onDoubleClick={() => document.getElementById(`edit-color-${index}`)?.click()}
           >
             <input
               type="color"
+              id={`edit-color-${index}`}
               value={color}
               className="edit-color-input"
-              onChange={(e) => onEditColor(color, e.target.value)}
+              onChange={(e) => onEditColor(index, e.target.value)}
             />
             <button className="remove-color" onClick={(e) => {
               e.stopPropagation();
-              onRemoveColor(color);
+              onRemoveColor(index);
             }}>×</button>
           </div>
         ))}

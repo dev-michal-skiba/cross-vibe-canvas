@@ -25,11 +25,19 @@ const ControlsInfo: React.FC<ControlsInfoProps> = ({ onClose }) => {
     <div className="modal-overlay">
       <div className="modal-content" ref={modalRef}>
         <button onClick={onClose} className="close-button">&times;</button>
+        <h2>Canvas</h2>
         <ul>
-          <li><b>Ctrl + Left Drag:</b> Draw line</li>
-          <li><b>Ctrl + Right Click:</b> Remove line</li>
-          <li><b>Left Click:</b> Add stitch</li>
-          <li><b>Right Click:</b> Remove stitch</li>
+          <li><b>Ctrl + Left Drag</b> Draw line</li>
+          <li><b>Ctrl + Right Click</b> Remove line</li>
+          <li><b>Left Click</b> Add stitch</li>
+          <li><b>Right Click</b> Remove stitch</li>
+        </ul>
+        <h2>Color Palette</h2>
+        <ul>
+          <li><b>Click '+'</b> Add color to the palette</li>
+          <li><b>Single Click</b> Select color</li>
+          <li><b>Double Click</b> Open color picker</li>
+          <li><b>Click 'x'</b> Remove color from the palette</li>
         </ul>
       </div>
     </div>

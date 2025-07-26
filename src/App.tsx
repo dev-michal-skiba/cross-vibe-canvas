@@ -17,7 +17,7 @@ function App() {
   const [lines, setLines] = useState<Line[]>([]);
   const [coloredCells, setColoredCells] = useState<Map<string, string>>(new Map());
   const [palette, setPalette] = useState<string[]>([]);
-  const [selectedColor, setSelectedColor] = useState<string | null>(null);
+  const [selectedColorIndex, setSelectedColorIndex] = useState<number | null>(null);
   const [backgroundImage, setBackgroundImage] = useState<string | null>(null);
   const [imageOpacity, setImageOpacity] = useState(1);
   const [gridOpacity, setGridOpacity] = useState(1);
@@ -31,7 +31,7 @@ function App() {
     setLines([]);
     setColoredCells(new Map());
     setPalette([]);
-    setSelectedColor(null);
+    setSelectedColorIndex(null);
     setBackgroundImage(null);
     setZoom(1.0);
     setImageOpacity(1);
@@ -41,35 +41,36 @@ function App() {
   };
 
   const handleAddColorToPalette = (newColor: string) => {
-    if (newColor && !palette.includes(newColor)) {
+    if (newColor) {
       setPalette([...palette, newColor]);
     }
   };
 
-  const handleRemoveColorFromPalette = (colorToRemove: string) => {
-    setPalette(palette.filter(color => color !== colorToRemove));
-    if (selectedColor === colorToRemove) {
-      setSelectedColor(null);
+  const handleRemoveColorFromPalette = (indexToRemove: number) => {
+    setPalette(palette.filter((_, index) => index !== indexToRemove));
+    if (selectedColorIndex !== null) {
+      if (indexToRemove === selectedColorIndex) {
+        setSelectedColorIndex(null);
+      } else if (indexToRemove < selectedColorIndex) {
+        setSelectedColorIndex(selectedColorIndex - 1);
+      }
     }
   };
 
-  const handleEditColorInPalette = (oldColor: string, newColor: string) => {
-    if (palette.includes(newColor)) {
-      alert(`Color ${newColor} already exists in the palette.`);
-      return;
-    }
+  const handleEditColorInPalette = (index: number, newColor: string) => {
+    const oldColor = palette[index];
+    if (oldColor === newColor) return;
 
-    const newPalette = palette.map(c => c === oldColor ? newColor : c);
+    const newPalette = palette.map((c, i) => (i === index ? newColor : c));
     setPalette(newPalette);
 
-    const newColoredCells = new Map<string, string>();
-    coloredCells.forEach((color, cell) => {
-      newColoredCells.set(cell, color === oldColor ? newColor : color);
-    });
-    setColoredCells(newColoredCells);
-
-    if (selectedColor === oldColor) {
-      setSelectedColor(newColor);
+    const occurrences = palette.filter(c => c === oldColor).length;
+    if (occurrences === 1) {
+      const newColoredCells = new Map<string, string>();
+      coloredCells.forEach((color, cell) => {
+        newColoredCells.set(cell, color === oldColor ? newColor : color);
+      });
+      setColoredCells(newColoredCells);
     }
   };
 
@@ -186,7 +187,7 @@ function App() {
                 setLines={setLines}
                 coloredCells={coloredCells}
                 setColoredCells={setColoredCells}
-                selectedColor={selectedColor}
+                selectedColor={selectedColorIndex !== null ? palette[selectedColorIndex] : null}
                 backgroundImage={backgroundImage}
                 imageOpacity={imageOpacity}
                 gridOpacity={gridOpacity}
@@ -215,7 +216,7 @@ function App() {
                 <h4>Opacity</h4>
                 <div className="opacity-controls">
                   <div className="opacity-slider-row">
-                    <label htmlFor="image-opacity">Image</label>
+                    <label htmlFor="image-opacity">Background</label>
                     <input id="image-opacity" type="range" min="0" max="1" step="0.05" value={imageOpacity} onChange={e => setImageOpacity(parseFloat(e.target.value))} />
                   </div>
                   <div className="opacity-slider-row">
@@ -246,8 +247,8 @@ function App() {
                 <h4>Color Palette</h4>
                 <Palette
                   palette={palette}
-                  selectedColor={selectedColor}
-                  setSelectedColor={setSelectedColor}
+                  selectedColorIndex={selectedColorIndex}
+                  setSelectedColorIndex={setSelectedColorIndex}
                   onAddColor={handleAddColorToPalette}
                   onRemoveColor={handleRemoveColorFromPalette}
                   onEditColor={handleEditColorInPalette}
@@ -259,7 +260,6 @@ function App() {
         ) : (
           <div className="start-view-container">
             <form onSubmit={handleCreateGrid} className="create-grid-form">
-              <span>Create grid:</span>
               <label>
                 Rows:
                 <input

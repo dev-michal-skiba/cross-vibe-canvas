@@ -29,15 +29,27 @@
 }
 
 .modal-content h2 {
+  margin-top: 15px;
+  margin-bottom: 10px;
+  padding-bottom: 5px;
+  border-bottom: 1px solid #eee;
+  font-size: 1.1em;
+}
+
+.modal-content h4:first-of-type {
   margin-top: 0;
 }
 
 .modal-content ul {
   list-style: none;
-  padding: 0;
-  margin: 20px 0;
+  padding-left: 0;
 }
 
 .modal-content li {
-  margin-bottom: 10px;
+  margin-bottom: 8px;
+}
+
+.modal-content li b {
+  display: inline-block;
+  width: 150px;
 } 
