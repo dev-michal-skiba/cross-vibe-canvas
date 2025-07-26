@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import Canvas from './components/Canvas'
+import ControlsInfo from './components/ControlsInfo'
 import './App.css'
 
 function App() {
@@ -7,6 +8,7 @@ function App() {
   const [rowsInput, setRowsInput] = useState(60)
   const [colsInput, setColsInput] = useState(60)
   const [zoom, setZoom] = useState(1)
+  const [showControlsInfo, setShowControlsInfo] = useState(false)
 
   const handleCreateGrid = (e: React.FormEvent) => {
     e.preventDefault()
@@ -47,10 +49,12 @@ function App() {
               <button onClick={() => setZoom(z => z * 1.2)}>Zoom In</button>
               <button onClick={() => setZoom(z => z / 1.2)}>Zoom Out</button>
               <button onClick={() => setZoom(1)}>Reset Zoom</button>
+              <button onClick={() => setShowControlsInfo(true)}>How to Use</button>
             </div>
             <Canvas rows={gridSize.rows} cols={gridSize.cols} zoom={zoom} />
           </div>
         )}
+        {showControlsInfo && <ControlsInfo onClose={() => setShowControlsInfo(false)} />}
       </main>
     </div>
   )

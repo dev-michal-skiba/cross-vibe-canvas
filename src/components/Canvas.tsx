@@ -51,7 +51,7 @@ const Canvas: React.FC<CanvasProps> = ({ rows, cols, zoom }) => {
         width: `${gridWidth}px`,
         height: `${gridHeight}px`,
       }}>
-        <Grid rows={rows} cols={cols} size={cellSize}/>
+        <Grid rows={rows} cols={cols} size={cellSize} zoom={zoom}/>
       </div>
     </div>
   );
